@@ -239,7 +239,7 @@ export default function SinglePlayer() {
   };
 
   const handleSimulation = () => {
-    const numGames = 1000;
+    const numGames = 10000;
     let totalTries = 0;
     let totalTime = 0;
     let maxTryTime = 0;
