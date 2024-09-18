@@ -7,14 +7,13 @@ import {
 } from "../../utils/gameUtils";
 import {GameStatus} from "@/ai/sergio/gameStatus";
 
-export const generateNumber = (gameStatus: GameStatus) : string => {
+export const generateNumber = (gameStatus: GameStatus, initialNumberList: Array<string>) : string => {
 
-  return generateNumberRandom(gameStatus);
+  return generateNumberMinSpaceHeuristic(gameStatus, initialNumberList);
 };
 
-export const generateNumberRandom = (gameStatus: GameStatus) : string => {
+export const generateNumberRandom = (gameStatus: GameStatus, initialNumberList: Array<string>) : string => {
 
-  const initialNumberList = generateNumberList();
   const newNumberList = initialNumberList.filter((number) => {
     return gameStatus.guesses.every(
         ({ guess, feedback }) => checkGuess(guess, number).equals(feedback)
