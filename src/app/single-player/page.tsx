@@ -257,8 +257,10 @@ export default function SinglePlayer() {
 
         const machineGuess = generateNumber(gameStatus);
         console.log(`Machine's guess: ${machineGuess}`);
+
         const feedback = checkGuess(machineGuess, secretNumber);
         gameStatus.guesses.push(new Guess(machineGuess, feedback))
+
         currentTries++;
         const elapsedTime = performance.now() - startTime;
         totalTime += elapsedTime;
