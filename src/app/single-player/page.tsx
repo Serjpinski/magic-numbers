@@ -21,7 +21,9 @@ import {
   updateLeaderboard,
   getFourDifferentDigits,
 } from "../../utils/gameUtils";
-import { usePageTitle } from "../../context/PageTitleContext"; // Import the usePageTitle hook
+import { usePageTitle } from "../../context/PageTitleContext";
+import {GameStatus, Guess} from "@/ai/sergio/gameStatus";
+import {generateNumber} from "@/ai/sergio/main"; // Import the usePageTitle hook
 
 const Leaderboard = ({
   leaderboard,
@@ -103,7 +105,7 @@ export default function SinglePlayer() {
       setUserGuesses([...userGuesses, `Your guess: ${guess} - ${feedback}`]);
       setTries(tries + 1);
       setGuess("");
-      if (feedback === "4M 0C") {
+      if (feedback.mates === 4) {
         const endTime = new Date();
         const timeTaken = Math.floor(
           (endTime.getTime() - (startTime?.getTime() || 0)) / 1000
@@ -134,7 +136,7 @@ export default function SinglePlayer() {
     // Filter the numberList based on machine feedback
     const newNumberList = numberList.filter((number) => {
       return machineFeedback.every(
-        ({ guess, feedback }) => checkGuess(number, guess) === feedback
+        ({ guess, feedback }) => checkGuess(number, guess).toString() === feedback
       );
     });
 
@@ -163,12 +165,12 @@ export default function SinglePlayer() {
     // Update machine guesses and feedback state
     setMachineGuesses([
       ...machineGuesses,
-      `Machine's guess: ${machineGuess} - ${feedback}`,
+      `Machine's guess: ${machineGuess} - ${feedback.toString()}`,
     ]);
-    setMachineFeedback([...machineFeedback, { guess: machineGuess, feedback }]);
+    setMachineFeedback([...machineFeedback, { guess: machineGuess, feedback: feedback.toString() }]);
     setNumberList(newNumberList);
 
-    if (feedback === "4M 0C") {
+    if (feedback.mates === 4) {
       setSnackbarMessage(
         `The machine guessed your number: ${machineGuess}. Game over! The machine secret number was ${machineNumber}`
       );
@@ -218,7 +220,7 @@ export default function SinglePlayer() {
   ) => {
     let maxDifference = -1;
     let bestGuess = numberList[0];
-    
+
     numberList.forEach((number) => {
       let totalDifference = 0;
       previousGuesses.forEach((guess) => {
@@ -243,47 +245,20 @@ export default function SinglePlayer() {
     let maxTryTime = 0;
 
     for (let i = 0; i < numGames; i++) {
+      const startTime = performance.now();
+      const gameStatus: GameStatus = new GameStatus(new Array<Guess>());
       const initialNumberList = generateNumberList();
       const secretNumber = generateMachineNumber(initialNumberList);
-      let currentMachineGuesses: string[] = [];
-      let currentMachineFeedback: { guess: string; feedback: string }[] = [];
       let currentTries = 0;
       console.log(`Game ${i + 1}`);
       while (true) {
+
         const startTime = performance.now();
-        const newNumberList = initialNumberList.filter((number) => {
-          return currentMachineFeedback.every(
-            ({ guess, feedback }) => checkGuess(number, guess) === feedback
-          );
-        });
 
-        let machineGuess;
-        if (currentMachineGuesses.length === 0) {
-          machineGuess = generateMachineNumber(newNumberList);
-        } else if (currentMachineGuesses.length === 1) {
-          //TODO improve second guess
-          const firstGuessDigits = new Set(
-            currentMachineGuesses[0].split(" - ")[0]
-          );
-          machineGuess = getFourDifferentDigits(
-            firstGuessDigits,
-            newNumberList
-          );
-          console.log(`Machine's guess: ${machineGuess}`);
-        } else {
-          const lastGuesses = currentMachineGuesses.map(
-            (guess) => guess.split(" - ")[0]
-          );
-          machineGuess = selectMostDifferentNumber(newNumberList, lastGuesses);
-          console.log(`Machine's guess: ${machineGuess}`);
-        }
-
+        const machineGuess = generateNumber(gameStatus);
+        console.log(`Machine's guess: ${machineGuess}`);
         const feedback = checkGuess(machineGuess, secretNumber);
-
-        currentMachineGuesses.push(
-          `${machineGuess} - ${feedback}`
-        );
-        currentMachineFeedback.push({ guess: machineGuess, feedback });
+        gameStatus.guesses.push(new Guess(machineGuess, feedback))
         currentTries++;
         const elapsedTime = performance.now() - startTime;
         totalTime += elapsedTime;
@@ -291,7 +266,7 @@ export default function SinglePlayer() {
           maxTryTime = elapsedTime;
         }
 
-        if (feedback === "4M 0C") {
+        if (feedback.mates === 4) {
           totalTries += currentTries;
           break;
         }

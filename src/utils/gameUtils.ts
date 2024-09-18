@@ -1,5 +1,7 @@
 // src/utils/gameUtils.ts
 
+import {Feedback, Guess} from "@/ai/sergio/gameStatus";
+
 export const generateMachineNumber = (numberList: string[]) => {
   const randomIndex = Math.floor(Math.random() * numberList.length);
   return numberList[randomIndex];
@@ -52,11 +54,11 @@ export const getFourDifferentDigits = (
 ) => {
 
   const validNumbers = numberList.filter(number => {
-    const digits = number.split(''); 
+    const digits = number.split('');
 
     const isValid = digits.every(digit => {
       const isExcluded = excludeDigits.has(digit);
-      return !isExcluded; 
+      return !isExcluded;
     });
     return isValid;
   });
@@ -84,7 +86,7 @@ export const checkGuess = (guess: string, target: string) => {
     }
   }
 
-  return `${mates}M ${checks}C`;
+  return new Feedback(mates, checks);
 };
 
 export const generateNumberList = () => {
